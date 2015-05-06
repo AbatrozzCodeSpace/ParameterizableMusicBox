@@ -1,7 +1,11 @@
 use <parametric_involute_gear_v5.0.scad>
 use <spur_generator.scad>
 
-function teeth_length( n ) = ( 28.9748 * teeth / 2.0 ) * sqrt( 1.0 / pow(2.0, n/12 ));
+// constant
+// C0Constant = 28.9748; // hypothetical
+C0Constant = 24.3648631; // empirical
+
+function teeth_length( n ) = ( C0Constant * teeth / 2.0 ) * sqrt( 1.0 / pow(2.0, n/12 ));
 function overall_teeth_width( teeth, gap, teethNum ) = teeth * numTeeth + gap * (numTeeth - 1);
 
 module base( resize = 1.0, gap = 2.1, teeth = 1.5, numTeeth = 12 ) {
@@ -19,7 +23,7 @@ module base( resize = 1.0, gap = 2.1, teeth = 1.5, numTeeth = 12 ) {
 // in teeth parameter 0 is C0
 module teeth_part( resize = 1.0, gap = 2.1, teeth = 1.5, numTeeth = 12, teethElement = [ 0:11 ] ) {
     offset = 0.1;
-    longestTeeth = ( 28.9748 * teeth / 2.0 ) *  sqrt( 1.0 / pow(2.0, min(teethElement)/12 ));
+    longestTeeth = ( C0Constant * teeth / 2.0 ) *  sqrt( 1.0 / pow(2.0, min(teethElement)/12 ));
     teethThickness = teeth / 2.0 * 0.9;
 	union() {
 		translate([0, 0 ,0]) cube([teeth * numTeeth + gap * (numTeeth - 1), 15.0, 2.0 - offset * 2 ], true);
@@ -31,10 +35,18 @@ module teeth_part( resize = 1.0, gap = 2.1, teeth = 1.5, numTeeth = 12, teethEle
     
     
     for ( i = [0 : numTeeth-1] ) {
-        teethLength = ( 28.9748 * teeth / 2.0 ) *  sqrt( 1.0 / pow(2.0, teethElement[i]/12 ));
+        teethLength = ( C0Constant * teeth / 2.0 ) *  sqrt( 1.0 / pow(2.0, teethElement[i]/12 ));
         translate([0,0,-teethThickness + (1.0 - offset )])
-        translate([overallX / 2 - teeth - ( i * (teeth + gap) ) ,7.5 + longestTeeth - teethLength, 0]) 
-        cube( [ teeth, teethLength, teethThickness] );
+        translate([overallX / 2 - teeth - ( i * (teeth + gap) ) ,7.5 + longestTeeth - teethLength, 0]) { 
+            cube( [ teeth, teethLength, teethThickness] );
+            // Mick Part
+            translate([0,0,-teethThickness])
+            cube( [ teeth, teethLength/2, teethThickness] );
+            translate([0,0,-2*teethThickness])
+            cube( [ teeth, teethLength/4, teethThickness] );
+            //translate([0,0,-3*teethThickness])
+            //cube( [ teeth, teethLength/8, teethThickness] );
+        }
         translate([overall_teeth_width( teeth, gap, teethNum) / 2 + -i * (gap+teeth) - teeth,7.5,-1 + offset]) cube([teeth,longestTeeth - teethLength,2 - 2*offset]);
     }
     // base and teeth connector
